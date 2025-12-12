@@ -1,0 +1,69 @@
+# Backend Implementation Todos
+
+This file tracks granular tasks for the backend development.
+
+## 🧠 AI Agents (`backend/ai_agents/`)
+
+- [ ] **Agent Core**
+    - [ ] Create `Agent` class in `agent.py` (inherits `BaseAgent`).
+    - [ ] Implement `process_message` handler.
+    - [ ] Implement `make_decision` logic using `DecisionEngine`.
+    - [ ] Implement `generate_response` calling `NLPProcessor`.
+- [ ] **NLP Module** (`nlp_module.py`)
+    - [ ] Integrate OpenAI API client (or similar).
+    - [ ] Implement `analyze_sentiment` using LLM or NLTK/TextBlob.
+    - [ ] Implement `extract_entities` using Spacy or LLM.
+    - [ ] Implement `summarize` using LLM.
+- [ ] **Orchestration**
+    - [ ] Create `SystemOrchestrator` class to manage the lifecycle of all agents.
+    - [ ] Implement a "Tick" loop (e.g., `asyncio.create_task`) that triggers agents to "perceive" and "act" periodically.
+
+## 🔌 API Layer (`backend/api/`)
+
+- [ ] **Dependency Injection**
+    - [ ] Create a `get_system_instance` dependency to share the active `Orchestrator` and `Engines` across requests.
+- [ ] **Agents API** (`agents.py`)
+    - [ ] Implement `GET /` to return real active agents from memory.
+    - [ ] Implement `POST /` to spawn new agents dynamically.
+    - [ ] Implement `GET /{id}/memory` to inspect agent state.
+- [ ] **Events API** (`events.py`)
+    - [ ] Connect `POST /ingest` to `EventIngestionSystem`.
+    - [ ] Implement `GET /` with filtering (category, source).
+- [ ] **Voting API** (`voting.py`)
+    - [ ] Connect `POST /sessions` to `VotingEngine.create_session`.
+    - [ ] Connect `POST /vote` to `VotingEngine.cast_vote`.
+    - [ ] Implement WebSocket endpoint for real-time vote updates.
+
+## 📡 Event Pipeline (`backend/event_pipeline/`)
+
+- [ ] **Ingestion Sources** (`ingestion.py`)
+    - [ ] Implement `RSSHandler` to parse XML feeds.
+    - [ ] Implement `NewsAPIHandler` to fetch from external APIs.
+- [ ] **Processing** (`processing.py`)
+    - [ ] Connect `EventProcessor` to `NLPProcessor` for enrichment.
+    - [ ] Implement `prioritization.py` logic to score events based on keywords/sentiment.
+
+## 🗳️ Voting & Gamification (`backend/voting/`)
+
+- [ ] **Persistence**
+    - [ ] Modify `VotingEngine` to save/load sessions from DB.
+- [ ] **Achievements** (`achievements.py`)
+    - [ ] Create event listeners for: `VoteCast`, `MessageSent`, `SessionWon`.
+    - [ ] Implement logic to check criteria and award badges.
+
+## ⛓️ Blockchain (`backend/blockchain/`)
+
+- [ ] **Solana Integration** (`solana_contracts.py`)
+    - [ ] Set up `AsyncClient` from `solana.rpc.async_api`.
+    - [ ] Implement `verify_wallet_signature` for auth.
+    - [ ] Implement `monitor_program` to listen for on-chain events.
+- [ ] **Tokenomics**
+    - [ ] Implement `calculate_staking_rewards`.
+
+## 💾 Database & Infrastructure
+
+- [ ] **Models**
+    - [ ] Create SQLAlchemy models in `backend/database/models.py`.
+    - [ ] Set up `alembic` for migrations.
+- [ ] **Configuration**
+    - [ ] Update `config.py` to read DB credentials from `.env`.
