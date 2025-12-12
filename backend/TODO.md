@@ -9,13 +9,13 @@ This file tracks granular tasks for the backend development.
     - [x] Implement `process_message` handler.
     - [x] Implement `make_decision` logic using `DecisionEngine`.
     - [x] Implement `generate_response` calling `NLPProcessor`.
-- [ ] **NLP Module** (`nlp_module.py`)
-    - [ ] Integrate OpenAI API client (or similar).
-    - [ ] Implement `analyze_sentiment` using LLM or NLTK/TextBlob.
-    - [ ] Implement `extract_entities` using Spacy or LLM.
-    - [ ] Implement `summarize` using LLM.
+- [x] **NLP Module** (`nlp_module.py`)
+    - [x] Integrate OpenAI API client (or similar).
+    - [x] Implement `analyze_sentiment` using LLM or NLTK/TextBlob.
+    - [x] Implement `extract_entities` using Spacy or LLM.
+    - [x] Implement `summarize` using LLM.
 - [ ] **Orchestration**
-    - [ ] Create `SystemOrchestrator` class to manage the lifecycle of all agents.
+    - [x] Create `SystemOrchestrator` class to manage the lifecycle of all agents.
     - [ ] Implement a "Tick" loop (e.g., `asyncio.create_task`) that triggers agents to "perceive" and "act" periodically.
 
 ## 🔌 API Layer (`backend/api/`)
