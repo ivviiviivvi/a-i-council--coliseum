@@ -14,18 +14,18 @@ This file tracks granular tasks for the backend development.
     - [x] Implement `analyze_sentiment` using LLM or NLTK/TextBlob.
     - [x] Implement `extract_entities` using Spacy or LLM.
     - [x] Implement `summarize` using LLM.
-- [ ] **Orchestration**
+- [x] **Orchestration**
     - [x] Create `SystemOrchestrator` class to manage the lifecycle of all agents.
-    - [ ] Implement a "Tick" loop (e.g., `asyncio.create_task`) that triggers agents to "perceive" and "act" periodically.
+    - [x] Implement a "Tick" loop (e.g., `asyncio.create_task`) that triggers agents to "perceive" and "act" periodically.
 
 ## 🔌 API Layer (`backend/api/`)
 
-- [ ] **Dependency Injection**
-    - [ ] Create a `get_system_instance` dependency to share the active `Orchestrator` and `Engines` across requests.
-- [ ] **Agents API** (`agents.py`)
-    - [ ] Implement `GET /` to return real active agents from memory.
-    - [ ] Implement `POST /` to spawn new agents dynamically.
-    - [ ] Implement `GET /{id}/memory` to inspect agent state.
+- [x] **Dependency Injection**
+    - [x] Create a `get_system_instance` dependency to share the active `Orchestrator` and `Engines` across requests.
+- [x] **Agents API** (`agents.py`)
+    - [x] Implement `GET /` to return real active agents from memory.
+    - [x] Implement `POST /` to spawn new agents dynamically.
+    - [x] Implement `GET /{id}/memory` to inspect agent state.
 - [ ] **Events API** (`events.py`)
     - [ ] Connect `POST /ingest` to `EventIngestionSystem`.
     - [ ] Implement `GET /` with filtering (category, source).

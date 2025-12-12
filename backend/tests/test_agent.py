@@ -39,7 +39,7 @@ async def test_agent_process_direct_message(agent):
     assert response is not None
     assert response.sender_id == agent.state.agent_id
     assert response.recipient_id == sender_id
-    assert "received your message" in response.content
+    assert "I received:" in response.content
 
 @pytest.mark.asyncio
 async def test_agent_process_broadcast_message_ignored(agent):

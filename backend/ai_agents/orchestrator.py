@@ -6,8 +6,9 @@ Manages the lifecycle of AI agents and the main event loop of the council.
 
 import asyncio
 from typing import Dict, List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
+import random
 
 from .agent import Agent, AgentRole, Message
 from .communication import AgentCommunicationProtocol
@@ -32,6 +33,8 @@ class SystemOrchestrator:
         self.is_running = False
         self.tick_rate = 1.0  # Seconds between ticks
         self.loop_task: Optional[asyncio.Task] = None
+        self.last_activity_time = datetime.utcnow()
+        self.silence_threshold_seconds = 30  # Trigger conversation after 30s of silence
 
         # Initialize Subsystems
         self.communication_protocol = AgentCommunicationProtocol()
@@ -97,21 +100,34 @@ class SystemOrchestrator:
         """
         Single system tick.
 
-        1. Process pending messages
+        1. Process pending messages (handled by comms protocol)
         2. Allow agents to reflect/act based on new events
-        3. Check for expired voting sessions
+        3. Check for silence and trigger conversation
         """
-        # 1. Communication is handled by its own loop, but we can check status
+        # Update last activity based on message queue?
+        # Ideally communication protocol would track last message time.
+        # For now, let's assume if there are agents, we check for silence.
 
-        # 2. Check for new events from pipeline (mocked for now)
-        # events = self.event_system.get_recent_events(limit=5)
-        # For each agent, notify if there's a new event they haven't seen?
-        # This would be done via broadcasting a message to agents.
+        if not self.agents:
+            return
 
-        # 3. Random background chatter or "thinking"
-        # In a real system, we might pick a random agent to start a conversation
-        # if silence persists for too long.
-        pass
+        now = datetime.utcnow()
+        time_since_activity = (now - self.last_activity_time).total_seconds()
+
+        if time_since_activity > self.silence_threshold_seconds:
+            # Pick a random agent to say something
+            active_agents = [a for a in self.agents.values() if a.state.is_active]
+            if active_agents:
+                speaker = random.choice(active_agents)
+                # Trigger a thought/message
+                # In a real system, we'd prompt "It's quiet, start a topic"
+                # For now, just a placeholder log or message
+                logger.info(f"Silence detected. Triggering {speaker.name}...")
+
+                # We could inject a "thought" into the agent to prompt them to speak
+                # await speaker.process_message(Message(..., content="SYSTEM: It's quiet..."))
+
+                self.last_activity_time = now # Reset timer
 
     async def broadcast_event(self, event_content: str) -> None:
         """
@@ -122,3 +138,4 @@ class SystemOrchestrator:
             sender_id="SYSTEM",
             content=event_content
         )
+        self.last_activity_time = datetime.utcnow()

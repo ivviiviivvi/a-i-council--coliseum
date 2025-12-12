@@ -153,21 +153,11 @@ class Agent(BaseAgent):
         """
         self.update_state(last_active=datetime.utcnow())
 
-        # In a real implementation, we would construct a full prompt here
-        # including system prompt, memory context, and the current input.
-
-        # For now, we delegate to the NLP module's summarize or similar,
-        # or just return a mock response since NLP module is largely a placeholder.
-
-        # Let's simulate a response
-        response = f"[{self.state.role}] I received your message: '{prompt}'."
-
-        # If we had a real LLM integration in NLPProcessor, we'd call it here:
-        # response = await self.nlp_processor.generate(
-        #    system=self.system_prompt,
-        #    prompt=prompt,
-        #    context=context
-        # )
+        response = await self.nlp_processor.generate(
+           system=self.system_prompt,
+           prompt=prompt,
+           context=context
+        )
 
         return response
 
