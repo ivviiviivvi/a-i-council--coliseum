@@ -17,6 +17,7 @@ from .api import (
     achievements_router,
     users_router
 )
+from .api.dependencies import get_orchestrator
 
 
 @asynccontextmanager
@@ -24,9 +25,16 @@ async def lifespan(app: FastAPI):
     """Lifecycle manager for the application"""
     # Startup
     print("🚀 Starting AI Council Coliseum Backend...")
+
+    # Initialize Orchestrator
+    orchestrator = get_orchestrator()
+    await orchestrator.start()
+
     yield
+
     # Shutdown
     print("👋 Shutting down AI Council Coliseum Backend...")
+    await orchestrator.stop()
 
 
 app = FastAPI(
