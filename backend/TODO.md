@@ -26,9 +26,9 @@ This file tracks granular tasks for the backend development.
     - [x] Implement `GET /` to return real active agents from memory.
     - [x] Implement `POST /` to spawn new agents dynamically.
     - [x] Implement `GET /{id}/memory` to inspect agent state.
-- [ ] **Events API** (`events.py`)
-    - [ ] Connect `POST /ingest` to `EventIngestionSystem`.
-    - [ ] Implement `GET /` with filtering (category, source).
+- [x] **Events API** (`events.py`)
+    - [x] Connect `POST /ingest` to `EventIngestionSystem`.
+    - [x] Implement `GET /` with filtering (category, source).
 - [ ] **Voting API** (`voting.py`)
     - [ ] Connect `POST /sessions` to `VotingEngine.create_session`.
     - [ ] Connect `POST /vote` to `VotingEngine.cast_vote`.
@@ -36,12 +36,12 @@ This file tracks granular tasks for the backend development.
 
 ## 📡 Event Pipeline (`backend/event_pipeline/`)
 
-- [ ] **Ingestion Sources** (`ingestion.py`)
-    - [ ] Implement `RSSHandler` to parse XML feeds.
-    - [ ] Implement `NewsAPIHandler` to fetch from external APIs.
-- [ ] **Processing** (`processing.py`)
+- [x] **Ingestion Sources** (`ingestion.py`)
+    - [x] Implement `RSSHandler` to parse XML feeds.
+    - [x] Implement `NewsAPIHandler` to fetch from external APIs.
+- [x] **Processing** (`processing.py`)
     - [ ] Connect `EventProcessor` to `NLPProcessor` for enrichment.
-    - [ ] Implement `prioritization.py` logic to score events based on keywords/sentiment.
+    - [x] Implement `prioritization.py` logic to score events based on keywords/sentiment.
 
 ## 🗳️ Voting & Gamification (`backend/voting/`)
 
