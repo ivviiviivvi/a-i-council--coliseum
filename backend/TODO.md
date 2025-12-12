@@ -4,11 +4,11 @@ This file tracks granular tasks for the backend development.
 
 ## 🧠 AI Agents (`backend/ai_agents/`)
 
-- [ ] **Agent Core**
-    - [ ] Create `Agent` class in `agent.py` (inherits `BaseAgent`).
-    - [ ] Implement `process_message` handler.
-    - [ ] Implement `make_decision` logic using `DecisionEngine`.
-    - [ ] Implement `generate_response` calling `NLPProcessor`.
+- [x] **Agent Core**
+    - [x] Create `Agent` class in `agent.py` (inherits `BaseAgent`).
+    - [x] Implement `process_message` handler.
+    - [x] Implement `make_decision` logic using `DecisionEngine`.
+    - [x] Implement `generate_response` calling `NLPProcessor`.
 - [ ] **NLP Module** (`nlp_module.py`)
     - [ ] Integrate OpenAI API client (or similar).
     - [ ] Implement `analyze_sentiment` using LLM or NLTK/TextBlob.
