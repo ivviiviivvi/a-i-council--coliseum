@@ -4,10 +4,20 @@ Solana Contract Manager
 Manages interactions with Solana smart contracts.
 """
 
+import os
+import logging
 from typing import Dict, Any, Optional, List
 from pydantic import BaseModel
 from datetime import datetime
 
+from solana.rpc.async_api import AsyncClient
+from solana.transaction import Transaction
+from solders.pubkey import Pubkey
+from solders.system_program import TransferParams, transfer
+from solders.keypair import Keypair
+from base58 import b58decode
+
+logger = logging.getLogger(__name__)
 
 class SolanaAccount(BaseModel):
     """Solana account information"""
@@ -27,6 +37,23 @@ class SolanaContractManager:
         self.rpc_url = rpc_url
         self.program_id = program_id
         self.accounts: Dict[str, SolanaAccount] = {}
+
+        # Initialize client and payer
+        self._payer: Optional[Keypair] = None
+        self._init_payer()
+
+    def _init_payer(self):
+        """Initialize payer keypair from environment"""
+        try:
+            private_key = os.getenv("SOLANA_PAYER_PRIVATE_KEY")
+            if private_key:
+                # Handle base58 string or bytes
+                if isinstance(private_key, str):
+                    self._payer = Keypair.from_base58_string(private_key)
+                else:
+                    self._payer = Keypair.from_bytes(private_key)
+        except Exception as e:
+            logger.warning(f"Failed to initialize Solana payer: {e}")
     
     async def initialize_council_program(self) -> bool:
         """Initialize the council selection program"""
@@ -130,13 +157,80 @@ class SolanaContractManager:
         Distribute rewards to multiple recipients
         
         Args:
-            recipients: Dict of address -> amount
+            recipients: Dict of address -> amount (in SOL or Lamports?)
+            Assuming amount is in SOL for now, need to convert to Lamports.
             
         Returns:
             True if successful
         """
-        # Placeholder for actual reward distribution transaction
-        return True
+        if not self._payer:
+            logger.error("No payer configured for reward distribution")
+            return False
+
+        if not recipients:
+            return True
+
+        async with AsyncClient(self.rpc_url) as client:
+            try:
+                # Create transaction
+                transaction = Transaction()
+
+                # Add transfer instructions for each recipient
+                for address, amount in recipients.items():
+                    # Convert SOL to lamports (1 SOL = 1e9 lamports)
+                    lamports = int(amount * 1_000_000_000)
+
+                    if lamports <= 0:
+                        continue
+
+                    try:
+                        to_pubkey = Pubkey.from_string(address)
+                    except ValueError:
+                        logger.error(f"Invalid recipient address: {address}")
+                        continue
+
+                    ix = transfer(
+                        TransferParams(
+                            from_pubkey=self._payer.pubkey(),
+                            to_pubkey=to_pubkey,
+                            lamports=lamports
+                        )
+                    )
+                    transaction.add(ix)
+
+                # Get recent blockhash
+                try:
+                    latest_blockhash_resp = await client.get_latest_blockhash()
+                    latest_blockhash = latest_blockhash_resp.value.blockhash
+                    transaction.recent_blockhash = latest_blockhash
+                except Exception as e:
+                    logger.error(f"Failed to get latest blockhash: {e}")
+                    return False
+
+                # Sign transaction
+                # transaction.sign(self._payer) # This might be different in newer solders/solana versions
+                # In solana-py 0.30+, we can use `send_transaction` with signers
+
+                # Send transaction
+                # We can pass the transaction object and the signer
+                try:
+                    # In newer solana-py, we might need to compile to message if using VersionedTransaction
+                    # But for legacy Transaction:
+                    resp = await client.send_transaction(
+                        transaction,
+                        self._payer
+                    )
+
+                    logger.info(f"Rewards distributed successfully. Signature: {resp.value}")
+                    return True
+
+                except Exception as e:
+                    logger.error(f"Failed to send transaction: {e}")
+                    return False
+
+            except Exception as e:
+                logger.error(f"Error distributing rewards: {e}")
+                return False
     
     def get_program_accounts(self) -> List[SolanaAccount]:
         """Get all program accounts"""
