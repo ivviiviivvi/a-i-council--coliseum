@@ -5,6 +5,7 @@ Manages interactions with Ethereum smart contracts.
 """
 
 from typing import Dict, Any, Optional
+from web3 import Web3
 
 
 class EthereumContractManager:
@@ -16,11 +17,16 @@ class EthereumContractManager:
     def __init__(self, rpc_url: str, contract_address: str):
         self.rpc_url = rpc_url
         self.contract_address = contract_address
+        self.w3: Optional[Web3] = None
     
     async def initialize_contract(self) -> bool:
         """Initialize contract connection"""
-        # Placeholder for actual Web3 connection
-        return True
+        try:
+            self.w3 = Web3(Web3.HTTPProvider(self.rpc_url))
+            return self.w3.is_connected()
+        except Exception as e:
+            # In a real app we might log this error
+            return False
     
     async def get_token_balance(self, address: str) -> float:
         """Get ERC-20 token balance"""
