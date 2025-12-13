@@ -1,0 +1,14 @@
+# Backend Tasks
+- [x] Implement Agent Framework
+    - [x] Base Agent
+    - [x] Agent implementation
+    - [x] Orchestrator
+    - [x] Memory Manager
+    - [x] Knowledge Base
+    - [x] Decision Engine
+    - [x] NLP Module
+- [ ] Implement Ethereum Integration
+- [ ] Add more tests for Agents
+- [ ] Implement Event Ingestion
+- [ ] Setup Database
+- [ ] Setup Redis
