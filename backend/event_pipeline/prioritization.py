@@ -5,6 +5,7 @@ Prioritizes events based on various factors.
 """
 
 from typing import Dict, Any
+import asyncio
 from datetime import datetime, timedelta
 
 from .ingestion import NormalizedEvent
@@ -78,11 +79,16 @@ class EventPrioritizer:
         Returns:
             List of (event, priority_score) tuples sorted by priority
         """
-        scored_events = []
-        for event in events:
-            score = await self.calculate_priority(event)
-            scored_events.append((event, score))
+        # Ensure events is a list so we can iterate multiple times if needed
+        # (once for gather, once for zip)
+        events_list = list(events)
         
+        # Calculate priorities concurrently
+        # Optimization: Use asyncio.gather to process events in parallel
+        # This significantly reduces time when calculate_priority involves I/O or async waits
+        priorities = await asyncio.gather(*(self.calculate_priority(event) for event in events_list))
+
+        scored_events = list(zip(events_list, priorities))
         scored_events.sort(key=lambda x: x[1], reverse=True)
         return scored_events
     
