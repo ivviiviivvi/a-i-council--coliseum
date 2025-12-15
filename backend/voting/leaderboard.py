@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 
 from .gamification import UserProgress
+from .achievements import AchievementSystem
 
 
 class LeaderboardType(str, Enum):
@@ -37,8 +38,9 @@ class LeaderboardSystem:
     Leaderboard system for competitive rankings
     """
     
-    def __init__(self, gamification_system):
+    def __init__(self, gamification_system, achievement_system: Optional[AchievementSystem] = None):
         self.gamification_system = gamification_system
+        self.achievement_system = achievement_system
         self.leaderboards: Dict[str, List[LeaderboardEntry]] = {}
         self.last_updated: Dict[str, datetime] = {}
     
@@ -113,7 +115,13 @@ class LeaderboardSystem:
             return float(progress.level)
         elif leaderboard_type == LeaderboardType.ACHIEVEMENTS:
             # Get achievement count from achievement system
-            return 0.0  # Placeholder
+            if self.achievement_system:
+                user_achievements = self.achievement_system.get_user_achievements(
+                    progress.user_id,
+                    completed_only=True
+                )
+                return float(len(user_achievements))
+            return 0.0
         else:
             return 0.0
     
