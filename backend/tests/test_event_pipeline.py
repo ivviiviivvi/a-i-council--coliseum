@@ -1,4 +1,5 @@
 import pytest
+import pytest_asyncio
 import asyncio
 from datetime import datetime
 from backend.event_pipeline.ingestion import EventIngestionSystem, EventSource
@@ -8,9 +9,21 @@ from backend.event_pipeline.routing import EventRouter
 from backend.event_pipeline.processing import EventProcessor
 from backend.event_pipeline.storage import EventStorage
 from backend.event_pipeline.notification import NotificationSystem
+from backend.database import Base, async_engine
+
+@pytest_asyncio.fixture
+async def setup_db():
+    # Setup DB for tests
+    async with async_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+    # Cleanup
+    async with async_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
 
 @pytest.mark.asyncio
-async def test_event_pipeline_flow():
+async def test_event_pipeline_flow(setup_db):
     # 1. Setup Components
     ingestion = EventIngestionSystem()
     classifier = EventClassifier()
@@ -71,10 +84,10 @@ async def test_event_pipeline_flow():
     processed_event = await processor.process_event(event, enrichments=["sentiment", "entities", "summary", "keywords"])
 
     assert processed_event.title == "AI COUNCIL ELECTIONS BEGIN"
-    assert processed_event.sentiment is not None # Check if enrichment worked
+    assert processed_event.sentiment is not None
     assert processed_event.summary is not None
 
-    # 7. Store
+    # 7. Store (Now uses SQLite DB)
     stored = await storage.store_event(processed_event)
     assert stored is True
 
