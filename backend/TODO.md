@@ -9,6 +9,6 @@
     - [x] NLP Module
 - [ ] Implement Ethereum Integration
 - [ ] Add more tests for Agents
-- [ ] Implement Event Ingestion
+- [x] Implement Event Ingestion
 - [ ] Setup Database
 - [ ] Setup Redis
