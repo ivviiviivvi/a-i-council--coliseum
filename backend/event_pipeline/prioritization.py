@@ -78,11 +78,14 @@ class EventPrioritizer:
         Returns:
             List of (event, priority_score) tuples sorted by priority
         """
-        scored_events = []
-        for event in events:
-            score = await self.calculate_priority(event)
-            scored_events.append((event, score))
+        import asyncio
         
+        # Calculate priorities concurrently
+        # We need to handle potential exceptions or ensure calculate_priority is safe
+        # Assuming calculate_priority is safe for now as it's internal logic
+        scores = await asyncio.gather(*(self.calculate_priority(event) for event in events))
+
+        scored_events = list(zip(events, scores))
         scored_events.sort(key=lambda x: x[1], reverse=True)
         return scored_events
     
