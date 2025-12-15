@@ -6,6 +6,7 @@ Processes events through various transformations and enrichments.
 
 from typing import Dict, Any, Optional, Callable, List
 from datetime import datetime
+import re
 
 from .ingestion import NormalizedEvent
 
@@ -32,6 +33,12 @@ class EventProcessor:
     def __init__(self):
         self.processors: List[Callable] = []
         self.enrichers: Dict[str, Callable] = {}
+
+        # Register default enrichers
+        self.add_enricher("sentiment", self.enrich_sentiment)
+        self.add_enricher("entities", self.enrich_entities)
+        self.add_enricher("summary", self.enrich_summary)
+        self.add_enricher("keywords", self.enrich_keywords)
     
     def add_processor(self, processor: Callable) -> None:
         """Add a processing function"""
@@ -92,41 +99,75 @@ class EventProcessor:
     
     async def enrich_sentiment(self, event: ProcessedEvent) -> ProcessedEvent:
         """Add sentiment analysis enrichment"""
-        # Placeholder for actual sentiment analysis
+        text = f"{event.title} {event.description}".lower()
+
+        positive_words = ["good", "great", "excellent", "positive", "success", "growth", "win", "benefit"]
+        negative_words = ["bad", "poor", "negative", "failure", "decline", "loss", "risk", "crisis", "warn"]
+
+        pos_count = sum(1 for word in positive_words if word in text)
+        neg_count = sum(1 for word in negative_words if word in text)
+
+        total = pos_count + neg_count + 1  # Avoid division by zero
+
         event.sentiment = {
-            "positive": 0.3,
-            "negative": 0.3,
-            "neutral": 0.4
+            "positive": pos_count / total,
+            "negative": neg_count / total,
+            "neutral": 1.0 - ((pos_count + neg_count) / total)
         }
         return event
     
     async def enrich_entities(self, event: ProcessedEvent) -> ProcessedEvent:
         """Add entity extraction enrichment"""
-        # Placeholder for actual entity extraction
-        event.entities = []
+        text = f"{event.title} {event.description}"
+
+        # Simple heuristic: look for capitalized words that are not at start of sentence
+        # This is a very basic approximation
+        entities = []
+        words = text.split()
+        for i, word in enumerate(words):
+            clean_word = re.sub(r'[^\w\s]', '', word)
+            if clean_word and clean_word[0].isupper() and i > 0:
+                # Check if previous word ended with punctuation
+                prev_word = words[i-1]
+                if not prev_word.endswith('.'):
+                    entities.append({"text": clean_word, "type": "unknown"})
+
+        # Remove duplicates
+        unique_entities = []
+        seen = set()
+        for e in entities:
+            if e["text"] not in seen:
+                unique_entities.append(e)
+                seen.add(e["text"])
+
+        event.entities = unique_entities
         return event
     
     async def enrich_summary(self, event: ProcessedEvent) -> ProcessedEvent:
         """Add summary enrichment"""
-        # Placeholder for actual summarization
-        if event.description and len(event.description) > 100:
-            event.summary = event.description[:100] + "..."
+        if event.description:
+            # Simple summary: First sentence
+            sentences = re.split(r'(?<=[.!?]) +', event.description)
+            event.summary = sentences[0] if sentences else event.description[:100]
+            if len(event.summary) > 200:
+                event.summary = event.summary[:197] + "..."
         else:
-            event.summary = event.description
+            event.summary = event.title
         return event
     
     async def enrich_keywords(self, event: ProcessedEvent) -> ProcessedEvent:
         """Add keyword extraction enrichment"""
-        # Placeholder for actual keyword extraction
         text = f"{event.title} {event.description}".lower()
-        words = text.split()
-        # Simple word frequency
+        words = re.findall(r'\b\w+\b', text)
+
+        stop_words = {"the", "a", "an", "in", "on", "at", "to", "for", "of", "with", "is", "are", "was", "were", "and", "or", "but"}
+
         word_freq = {}
         for word in words:
-            if len(word) > 4:  # Only longer words
+            if len(word) > 3 and word not in stop_words:
                 word_freq[word] = word_freq.get(word, 0) + 1
         
-        # Top 5 keywords
+        # Top 10 keywords
         sorted_words = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)
-        event.keywords = [word for word, _ in sorted_words[:5]]
+        event.keywords = [word for word, _ in sorted_words[:10]]
         return event
