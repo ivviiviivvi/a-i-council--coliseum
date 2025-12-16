@@ -4,11 +4,13 @@ Agents API Router
 API endpoints for AI agent management.
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Optional
 from pydantic import BaseModel
 
 from ..ai_agents import AgentRole
+from ..ai_agents.orchestrator import SystemOrchestrator
+from .dependencies import get_orchestrator
 
 
 router = APIRouter()
@@ -35,10 +37,23 @@ async def list_agents():
 
 
 @router.post("/", response_model=AgentResponse)
-async def create_agent(request: CreateAgentRequest):
+async def create_agent(
+    request: CreateAgentRequest,
+    orchestrator: SystemOrchestrator = Depends(get_orchestrator)
+):
     """Create a new agent"""
-    # Placeholder - integrate with actual agent system
-    raise HTTPException(status_code=501, detail="Not implemented yet")
+    try:
+        agent = orchestrator.create_agent(
+            role=request.role,
+            config=request.config
+        )
+        return AgentResponse(
+            agent_id=agent.state.agent_id,
+            role=agent.state.role,
+            is_active=agent.state.is_active
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create agent: {str(e)}")
 
 
 @router.get("/{agent_id}", response_model=AgentResponse)
