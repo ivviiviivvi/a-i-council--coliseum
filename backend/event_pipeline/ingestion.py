@@ -155,7 +155,13 @@ class EventIngestionSystem:
         if source:
             events = [e for e in events if e.source == source]
         
-        return sorted(events, key=lambda e: e.timestamp, reverse=True)[:limit]
+        # Optimization: Use slice if already sorted.
+        # Since events are appended chronologically, the list is naturally sorted by timestamp (ascending).
+        # We can just take the last 'limit' elements and reverse them.
+
+        if limit < len(events):
+             return events[-limit:][::-1]
+        return events[::-1]
     
     def clear_old_events(self, max_age_hours: int = 24) -> int:
         """Clear events older than specified hours"""
