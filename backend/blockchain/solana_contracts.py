@@ -84,7 +84,8 @@ class SolanaContractManager:
     async def stake_tokens(
         self,
         user_address: str,
-        amount: float
+        amount: float,
+        lock_period_days: int = 0
     ) -> bool:
         """
         Stake tokens for governance
@@ -92,6 +93,7 @@ class SolanaContractManager:
         Args:
             user_address: User's Solana address
             amount: Amount to stake
+            lock_period_days: Number of days to lock the stake
             
         Returns:
             True if successful
@@ -122,6 +124,32 @@ class SolanaContractManager:
         # Placeholder - would read from Solana account
         return 0.0
     
+    async def get_staking_positions(self, user_address: str) -> List[Dict[str, Any]]:
+        """
+        Get all staking positions for a user
+
+        Args:
+            user_address: User's Solana address
+
+        Returns:
+            List of staking positions
+        """
+        # Placeholder - would read from Solana account
+        return []
+
+    async def get_wallet_balance(self, user_address: str) -> float:
+        """
+        Get user's wallet balance
+
+        Args:
+            user_address: User's Solana address
+
+        Returns:
+            Wallet balance
+        """
+        # Placeholder - would query RPC
+        return 0.0
+
     async def distribute_rewards(
         self,
         recipients: Dict[str, float]
