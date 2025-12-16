@@ -8,6 +8,7 @@ from typing import Dict, Any, Optional, Callable, List
 from datetime import datetime
 
 from .ingestion import NormalizedEvent
+from backend.ai_agents.nlp_module import NLPProcessor
 
 
 class ProcessedEvent(NormalizedEvent):
@@ -17,11 +18,12 @@ class ProcessedEvent(NormalizedEvent):
     summary: Optional[str] = None
     keywords: Optional[List[str]] = None
     priority_score: Optional[float] = None
-    processing_timestamp: datetime = None
+    processing_timestamp: Optional[datetime] = None
     
     def __init__(self, **data):
         super().__init__(**data)
-        self.processing_timestamp = datetime.utcnow()
+        if self.processing_timestamp is None:
+            self.processing_timestamp = datetime.utcnow()
 
 
 class EventProcessor:
@@ -29,9 +31,10 @@ class EventProcessor:
     Processes events with enrichments and transformations
     """
     
-    def __init__(self):
+    def __init__(self, nlp_processor: Optional[NLPProcessor] = None):
         self.processors: List[Callable] = []
         self.enrichers: Dict[str, Callable] = {}
+        self.nlp = nlp_processor or NLPProcessor()
     
     def add_processor(self, processor: Callable) -> None:
         """Add a processing function"""
@@ -92,12 +95,35 @@ class EventProcessor:
     
     async def enrich_sentiment(self, event: ProcessedEvent) -> ProcessedEvent:
         """Add sentiment analysis enrichment"""
-        # Placeholder for actual sentiment analysis
-        event.sentiment = {
-            "positive": 0.3,
-            "negative": 0.3,
-            "neutral": 0.4
+        # Integrate with NLP module
+        text = f"{event.title} {event.description}"
+        result = await self.nlp.analyze_sentiment(text)
+
+        # Map NLP result (label, score) to sentiment distribution
+        label = result.get("sentiment", "neutral").lower()
+        score = result.get("score", 0.0)
+
+        # Initialize distribution
+        distribution = {
+            "positive": 0.0,
+            "negative": 0.0,
+            "neutral": 0.0
         }
+
+        # Heuristic mapping: assign score to label, distribute remainder
+        if label in distribution:
+            distribution[label] = score
+            remaining = 1.0 - score
+            others = [k for k in distribution if k != label]
+            if others:
+                split = remaining / len(others)
+                for k in others:
+                    distribution[k] = split
+        else:
+            # Fallback for unknown labels
+            distribution["neutral"] = 1.0
+
+        event.sentiment = distribution
         return event
     
     async def enrich_entities(self, event: ProcessedEvent) -> ProcessedEvent:
