@@ -4,8 +4,12 @@ Blockchain API Router
 API endpoints for blockchain integration.
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends, Query
 from pydantic import BaseModel
+from typing import List, Dict, Any
+
+from backend.blockchain.rewards import RewardDistribution
+from backend.api.dependencies import get_reward_distribution
 
 
 router = APIRouter()
@@ -21,6 +25,11 @@ class TransferRequest(BaseModel):
     """Request to transfer tokens"""
     to_address: str
     amount: float
+
+
+class ClaimRewardRequest(BaseModel):
+    """Request to claim rewards"""
+    user_address: str
 
 
 @router.get("/balance/{address}")
@@ -59,14 +68,38 @@ async def transfer_tokens(request: TransferRequest):
 
 
 @router.get("/rewards/pending")
-async def get_pending_rewards():
+async def get_pending_rewards(
+    address: str = Query(..., description="User wallet address"),
+    rewards_system: RewardDistribution = Depends(get_reward_distribution)
+):
     """Get pending rewards"""
-    # Placeholder - integrate with actual rewards system
-    return {"pending_rewards": 0.0}
+    amount = rewards_system.get_pending_rewards(address)
+    return {"pending_rewards": amount}
 
 
 @router.post("/rewards/claim")
-async def claim_rewards():
+async def claim_rewards(
+    request: ClaimRewardRequest,
+    rewards_system: RewardDistribution = Depends(get_reward_distribution)
+):
     """Claim pending rewards"""
-    # Placeholder - integrate with actual rewards system
-    return {"status": "claimed", "amount": 0.0}
+    user_address = request.user_address
+
+    # Get all pending claims
+    pending_claims = rewards_system.get_user_claims(user_address, claimed=False)
+
+    claimed_amount = 0.0
+    claimed_ids = []
+
+    for claim in pending_claims:
+        result = rewards_system.claim_reward(claim.claim_id)
+        if result is not None:
+            claimed_amount += result
+            claimed_ids.append(claim.claim_id)
+
+    return {
+        "status": "claimed",
+        "amount": claimed_amount,
+        "transaction_id": "tx_simulated_" + str(len(claimed_ids)), # Simulated transaction ID
+        "claimed_count": len(claimed_ids)
+    }
