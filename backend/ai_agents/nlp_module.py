@@ -39,7 +39,30 @@ class NLPProcessor:
             List of entities with type and text
         """
         # Placeholder for actual entity extraction
-        return []
+        # Simple heuristic for demonstration: extract capitalized words as potential entities
+        # This allows verifying that the pipeline integration works
+        entities = []
+        words = text.split()
+        for word in words:
+            # Simple check for capitalized words that are not at the start of a sentence
+            # (This is very naive and just for testing integration)
+            clean_word = word.strip(".,!?\"'")
+            if clean_word and clean_word[0].isupper() and len(clean_word) > 1:
+                entities.append({
+                    "text": clean_word,
+                    "type": "UNKNOWN",
+                    "confidence": 0.5
+                })
+
+        # Deduplicate
+        unique_entities = []
+        seen = set()
+        for e in entities:
+            if e["text"] not in seen:
+                unique_entities.append(e)
+                seen.add(e["text"])
+
+        return unique_entities
     
     async def summarize(self, text: str, max_length: int = 100) -> str:
         """

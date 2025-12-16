@@ -8,6 +8,7 @@ from typing import Dict, Any, Optional, Callable, List
 from datetime import datetime
 
 from .ingestion import NormalizedEvent
+from backend.ai_agents.nlp_module import NLPProcessor
 
 
 class ProcessedEvent(NormalizedEvent):
@@ -29,9 +30,10 @@ class EventProcessor:
     Processes events with enrichments and transformations
     """
     
-    def __init__(self):
+    def __init__(self, nlp_processor: Optional[NLPProcessor] = None):
         self.processors: List[Callable] = []
         self.enrichers: Dict[str, Callable] = {}
+        self.nlp_processor = nlp_processor or NLPProcessor()
     
     def add_processor(self, processor: Callable) -> None:
         """Add a processing function"""
@@ -102,8 +104,11 @@ class EventProcessor:
     
     async def enrich_entities(self, event: ProcessedEvent) -> ProcessedEvent:
         """Add entity extraction enrichment"""
-        # Placeholder for actual entity extraction
-        event.entities = []
+        text = f"{event.title} {event.description}"
+        if event.content:
+            text += f" {event.content}"
+
+        event.entities = await self.nlp_processor.extract_entities(text)
         return event
     
     async def enrich_summary(self, event: ProcessedEvent) -> ProcessedEvent:
