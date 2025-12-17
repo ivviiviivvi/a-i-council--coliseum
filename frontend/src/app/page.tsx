@@ -13,7 +13,9 @@ export default function Home() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
           <div className="card">
-            <h2 className="text-2xl font-bold mb-3">🤖 AI Agents</h2>
+            <h2 className="text-2xl font-bold mb-3">
+              <span aria-hidden="true">🤖</span> AI Agents
+            </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
               7-module AI agent framework with decision-making, communication, and coordination
             </p>
@@ -21,7 +23,9 @@ export default function Home() {
           </div>
 
           <div className="card">
-            <h2 className="text-2xl font-bold mb-3">📰 Events</h2>
+            <h2 className="text-2xl font-bold mb-3">
+              <span aria-hidden="true">📰</span> Events
+            </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
               Real-time event pipeline with ingestion, classification, and prioritization
             </p>
@@ -29,7 +33,9 @@ export default function Home() {
           </div>
 
           <div className="card">
-            <h2 className="text-2xl font-bold mb-3">🗳️ Voting</h2>
+            <h2 className="text-2xl font-bold mb-3">
+              <span aria-hidden="true">🗳️</span> Voting
+            </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
               Participate in debates with viewer voting and gamification
             </p>
@@ -37,7 +43,9 @@ export default function Home() {
           </div>
 
           <div className="card">
-            <h2 className="text-2xl font-bold mb-3">⛓️ Blockchain</h2>
+            <h2 className="text-2xl font-bold mb-3">
+              <span aria-hidden="true">⛓️</span> Blockchain
+            </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
               Solana & Ethereum integration with staking and rewards
             </p>
@@ -45,7 +53,9 @@ export default function Home() {
           </div>
 
           <div className="card">
-            <h2 className="text-2xl font-bold mb-3">🏆 Achievements</h2>
+            <h2 className="text-2xl font-bold mb-3">
+              <span aria-hidden="true">🏆</span> Achievements
+            </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
               13 achievements across 6 tiers with points and rewards
             </p>
@@ -53,7 +63,9 @@ export default function Home() {
           </div>
 
           <div className="card">
-            <h2 className="text-2xl font-bold mb-3">📊 Leaderboard</h2>
+            <h2 className="text-2xl font-bold mb-3">
+              <span aria-hidden="true">📊</span> Leaderboard
+            </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
               Compete with other viewers and climb the ranks
             </p>
