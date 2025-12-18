@@ -8,6 +8,8 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import uvicorn
+import os
+import json
 
 from .api import (
     agents_router,
@@ -45,9 +47,17 @@ app = FastAPI(
 )
 
 # CORS middleware
+# Get CORS origins from environment variable, default to secure local defaults
+cors_origins_str = os.getenv("CORS_ORIGINS", '["http://localhost:3000", "http://localhost:8000"]')
+try:
+    allow_origins = json.loads(cors_origins_str)
+except json.JSONDecodeError:
+    # Handle comma-separated string fallback
+    allow_origins = [origin.strip() for origin in cors_origins_str.split(",")]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure for production
+    allow_origins=allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
