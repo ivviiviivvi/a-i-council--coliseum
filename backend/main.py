@@ -4,10 +4,11 @@ FastAPI Main Application
 Main entry point for the AI Council Coliseum backend.
 """
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import uvicorn
+import os
 
 from .api import (
     agents_router,
@@ -45,13 +46,31 @@ app = FastAPI(
 )
 
 # CORS middleware
+# Security: Configure strict CORS for production
+# Get allowed origins from env, default to localhost for dev
+cors_origins_str = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8000")
+origins = [origin.strip() for origin in cors_origins_str.split(",")]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure for production
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Security Headers Middleware
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    """
+    Add security headers to all responses.
+    - X-Content-Type-Options: nosniff (Prevent MIME type sniffing)
+    - X-Frame-Options: SAMEORIGIN (Prevent clickjacking while allowing own iframe)
+    """
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    return response
 
 # Include routers
 app.include_router(agents_router, prefix="/api/agents", tags=["agents"])
