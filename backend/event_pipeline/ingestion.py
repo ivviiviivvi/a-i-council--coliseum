@@ -8,6 +8,7 @@ from typing import Dict, Any, List, Optional, Callable
 from pydantic import BaseModel, Field
 from datetime import datetime
 from enum import Enum
+import heapq
 import uuid
 import asyncio
 
@@ -155,7 +156,9 @@ class EventIngestionSystem:
         if source:
             events = [e for e in events if e.source == source]
         
-        return sorted(events, key=lambda e: e.timestamp, reverse=True)[:limit]
+        if limit < len(events):
+            return heapq.nlargest(limit, events, key=lambda e: e.timestamp)
+        return sorted(events, key=lambda e: e.timestamp, reverse=True)
     
     def clear_old_events(self, max_age_hours: int = 24) -> int:
         """Clear events older than specified hours"""
