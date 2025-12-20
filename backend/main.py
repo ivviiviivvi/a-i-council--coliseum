@@ -4,6 +4,7 @@ FastAPI Main Application
 Main entry point for the AI Council Coliseum backend.
 """
 
+import os
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -45,9 +46,14 @@ app = FastAPI(
 )
 
 # CORS middleware
+# Security enhancement: Restrict origins based on environment variable
+# Default allows local frontend (3000) and backend (8000)
+cors_origins_str = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8000")
+origins = [origin.strip() for origin in cors_origins_str.split(",") if origin.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure for production
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
