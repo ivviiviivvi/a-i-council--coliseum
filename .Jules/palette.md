@@ -1,0 +1,3 @@
+## 2024-03-24 - Centralized Accessibility Styles
+**Learning:** Consolidating focus and interaction styles (like `focus-visible` and `active:scale-95`) into global CSS component classes (e.g., `.btn-primary`) is far more efficient than adding them to every individual element. It ensures consistent keyboard accessibility and tactile feedback across the entire application with a single source of truth.
+**Action:** Always check `globals.css` or design token files for existing component classes before styling individual elements, and advocate for moving repeated accessible patterns into these shared classes.
