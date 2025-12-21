@@ -6,6 +6,7 @@ Processes events through various transformations and enrichments.
 
 from typing import Dict, Any, Optional, Callable, List
 from datetime import datetime
+import asyncio
 
 from .ingestion import NormalizedEvent
 
@@ -32,6 +33,8 @@ class EventProcessor:
     def __init__(self):
         self.processors: List[Callable] = []
         self.enrichers: Dict[str, Callable] = {}
+        # Concurrency limit for batch processing
+        self.semaphore = asyncio.Semaphore(10)
     
     def add_processor(self, processor: Callable) -> None:
         """Add a processing function"""
@@ -78,17 +81,31 @@ class EventProcessor:
         
         return processed
     
+    async def _process_with_semaphore(
+        self,
+        event: NormalizedEvent,
+        enrichments: Optional[List[str]] = None
+    ) -> ProcessedEvent:
+        """Helper to process event with semaphore"""
+        async with self.semaphore:
+            return await self.process_event(event, enrichments)
+
     async def batch_process(
         self,
         events: List[NormalizedEvent],
         enrichments: Optional[List[str]] = None
     ) -> List[ProcessedEvent]:
-        """Process multiple events"""
-        processed_events = []
-        for event in events:
-            processed = await self.process_event(event, enrichments)
-            processed_events.append(processed)
-        return processed_events
+        """
+        Process multiple events concurrently
+
+        OPTIMIZATION: Uses asyncio.gather for concurrent execution instead of sequential loop.
+        Includes a semaphore to limit concurrency and prevent resource exhaustion.
+        """
+        tasks = [
+            self._process_with_semaphore(event, enrichments)
+            for event in events
+        ]
+        return await asyncio.gather(*tasks)
     
     async def enrich_sentiment(self, event: ProcessedEvent) -> ProcessedEvent:
         """Add sentiment analysis enrichment"""
