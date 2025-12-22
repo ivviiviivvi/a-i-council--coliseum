@@ -1,0 +1,4 @@
+## 2024-05-23 - Overly Permissive CORS Configuration
+**Vulnerability:** The backend was configured with `allow_origins=["*"]` while also having `allow_credentials=True`. This configuration is insecure as it allows any website to make authenticated requests to the API (if the browser supported it, though modern browsers block `*` with credentials, it shows a lack of defense in depth and intent to be public). More critically, it allows any site to read responses from the API if credentials weren't strictly required or if the browser implementation was lenient.
+**Learning:** Default configurations or "dev mode" settings often make it into production codebases. Explicitly defining allowed origins is crucial for security.
+**Prevention:** Always use environment variables to define allowed origins (`CORS_ORIGINS`) and default to a safe, restrictive list (e.g., localhost) rather than wildcard.
