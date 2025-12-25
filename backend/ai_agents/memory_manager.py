@@ -4,9 +4,10 @@ Memory Manager Module
 Manages agent memory including short-term and long-term storage.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from typing import Dict, Any, List, Optional, Tuple
+from datetime import datetime, timedelta, timezone
 from collections import deque
+import heapq
 
 
 class MemoryEntry:
@@ -15,12 +16,12 @@ class MemoryEntry:
     def __init__(self, key: str, value: Any, ttl: Optional[int] = None):
         self.key = key
         self.value = value
-        self.created_at = datetime.utcnow()
+        self.created_at = datetime.now(timezone.utc)
         self.expires_at = (
-            datetime.utcnow() + timedelta(seconds=ttl) if ttl else None
+            datetime.now(timezone.utc) + timedelta(seconds=ttl) if ttl else None
         )
         self.access_count = 0
-        self.last_accessed = datetime.utcnow()
+        self.last_accessed = datetime.now(timezone.utc)
 
 
 class MemoryManager:
@@ -32,13 +33,14 @@ class MemoryManager:
     def __init__(self, max_short_term: int = 100, max_long_term: int = 1000):
         self.short_term: deque = deque(maxlen=max_short_term)
         self.long_term: Dict[str, MemoryEntry] = {}
+        self.expiry_heap: List[Tuple[datetime, str]] = []  # Min-heap of (expires_at, key)
         self.max_long_term = max_long_term
     
     def add_short_term(self, value: Any) -> None:
         """Add to short-term memory (FIFO queue)"""
         self.short_term.append({
             "value": value,
-            "timestamp": datetime.utcnow()
+            "timestamp": datetime.now(timezone.utc)
         })
     
     def get_short_term(self, limit: Optional[int] = None) -> List[Any]:
@@ -57,6 +59,9 @@ class MemoryManager:
         entry = MemoryEntry(key, value, ttl)
         self.long_term[key] = entry
         
+        if entry.expires_at:
+            heapq.heappush(self.expiry_heap, (entry.expires_at, key))
+
         # Enforce size limit
         if len(self.long_term) > self.max_long_term:
             self._evict_lru()
@@ -68,7 +73,7 @@ class MemoryManager:
         entry = self.long_term.get(key)
         if entry:
             entry.access_count += 1
-            entry.last_accessed = datetime.utcnow()
+            entry.last_accessed = datetime.now(timezone.utc)
             return entry.value
         return None
     
@@ -76,6 +81,7 @@ class MemoryManager:
         """Remove from long-term memory"""
         if key in self.long_term:
             del self.long_term[key]
+            # Note: The key remains in expiry_heap, but _clean_expired will ignore it
     
     def clear_short_term(self) -> None:
         """Clear short-term memory"""
@@ -84,6 +90,7 @@ class MemoryManager:
     def clear_long_term(self) -> None:
         """Clear long-term memory"""
         self.long_term.clear()
+        self.expiry_heap.clear()
     
     def clear_all(self) -> None:
         """Clear all memory"""
@@ -91,14 +98,24 @@ class MemoryManager:
         self.clear_long_term()
     
     def _clean_expired(self) -> None:
-        """Remove expired entries"""
-        now = datetime.utcnow()
-        expired_keys = [
-            key for key, entry in self.long_term.items()
-            if entry.expires_at and entry.expires_at < now
-        ]
-        for key in expired_keys:
-            del self.long_term[key]
+        """Remove expired entries using min-heap for O(1) access to next expiration"""
+        now = datetime.now(timezone.utc)
+
+        while self.expiry_heap:
+            expires_at, key = self.expiry_heap[0]
+
+            if expires_at > now:
+                break
+
+            # Pop the expired entry
+            heapq.heappop(self.expiry_heap)
+
+            # Check if entry is still valid and matches expiration
+            # (It might have been removed or updated with a new TTL)
+            if key in self.long_term:
+                entry = self.long_term[key]
+                if entry.expires_at == expires_at:
+                    del self.long_term[key]
     
     def _evict_lru(self) -> None:
         """Evict least recently used entry"""
@@ -110,6 +127,7 @@ class MemoryManager:
             key=lambda item: item[1].last_accessed
         )[0]
         del self.long_term[lru_key]
+        # Note: The key remains in expiry_heap if it had a TTL, but _clean_expired will ignore it
     
     def get_stats(self) -> Dict[str, Any]:
         """Get memory statistics"""
