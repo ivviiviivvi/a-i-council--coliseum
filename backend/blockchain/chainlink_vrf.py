@@ -65,7 +65,7 @@ class ChainlinkVRFIntegration:
         self.pending_requests[request_id] = request
         
         # Simulate VRF request (in production, this calls the actual contract)
-        await self._simulate_vrf_fulfillment(request_id)
+        asyncio.create_task(self._simulate_vrf_fulfillment(request_id))
         
         return request_id
     
