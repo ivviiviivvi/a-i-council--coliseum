@@ -83,12 +83,10 @@ class EventProcessor:
         events: List[NormalizedEvent],
         enrichments: Optional[List[str]] = None
     ) -> List[ProcessedEvent]:
-        """Process multiple events"""
-        processed_events = []
-        for event in events:
-            processed = await self.process_event(event, enrichments)
-            processed_events.append(processed)
-        return processed_events
+        """Process multiple events concurrently"""
+        import asyncio
+        tasks = [self.process_event(event, enrichments) for event in events]
+        return await asyncio.gather(*tasks)
     
     async def enrich_sentiment(self, event: ProcessedEvent) -> ProcessedEvent:
         """Add sentiment analysis enrichment"""
