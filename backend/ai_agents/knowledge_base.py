@@ -7,6 +7,7 @@ Provides structured knowledge storage and retrieval for AI agents.
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 import uuid
+import heapq
 
 
 class KnowledgeEntry:
@@ -73,9 +74,9 @@ class KnowledgeBase:
     
     def get_popular_entries(self, limit: int = 10) -> List[KnowledgeEntry]:
         """Get most accessed entries"""
-        sorted_entries = sorted(
+        # Optimized to O(N log K) using heapq
+        return heapq.nlargest(
+            limit,
             self.entries.values(),
-            key=lambda e: e.access_count,
-            reverse=True
+            key=lambda e: e.access_count
         )
-        return sorted_entries[:limit]
