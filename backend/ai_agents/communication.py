@@ -121,11 +121,18 @@ class AgentCommunicationProtocol:
                                 await self.message_queue.put(response)
                 else:
                     # Broadcast message
+                    tasks = []
                     for agent_id, agent in self.agents.items():
                         if agent_id != message.sender_id and agent.state.is_active:
-                            response = await agent.process_message(message)
-                            if response:
-                                await self.message_queue.put(response)
+                            tasks.append(agent.process_message(message))
+
+                    if tasks:
+                        results = await asyncio.gather(*tasks, return_exceptions=True)
+                        for result in results:
+                            if isinstance(result, Exception):
+                                print(f"Error processing broadcast message: {result}")
+                            elif result:
+                                await self.message_queue.put(result)
                 
             except asyncio.TimeoutError:
                 continue
