@@ -6,7 +6,7 @@ Manages agent memory including short-term and long-term storage.
 
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
-from collections import deque
+from collections import deque, OrderedDict
 
 
 class MemoryEntry:
@@ -31,7 +31,7 @@ class MemoryManager:
     
     def __init__(self, max_short_term: int = 100, max_long_term: int = 1000):
         self.short_term: deque = deque(maxlen=max_short_term)
-        self.long_term: Dict[str, MemoryEntry] = {}
+        self.long_term: OrderedDict[str, MemoryEntry] = OrderedDict()
         self.max_long_term = max_long_term
     
     def add_short_term(self, value: Any) -> None:
@@ -56,6 +56,7 @@ class MemoryManager:
         # Add new entry
         entry = MemoryEntry(key, value, ttl)
         self.long_term[key] = entry
+        self.long_term.move_to_end(key)
         
         # Enforce size limit
         if len(self.long_term) > self.max_long_term:
@@ -69,6 +70,7 @@ class MemoryManager:
         if entry:
             entry.access_count += 1
             entry.last_accessed = datetime.utcnow()
+            self.long_term.move_to_end(key)
             return entry.value
         return None
     
@@ -93,6 +95,10 @@ class MemoryManager:
     def _clean_expired(self) -> None:
         """Remove expired entries"""
         now = datetime.utcnow()
+        # Create a list of keys to remove to avoid runtime error during iteration
+        # Iterating over OrderedDict keys is still O(N), but we need to check timestamps.
+        # OrderedDict doesn't help with expiration based on time unless we have a separate structure.
+        # But this task was about LRU eviction.
         expired_keys = [
             key for key, entry in self.long_term.items()
             if entry.expires_at and entry.expires_at < now
@@ -105,11 +111,8 @@ class MemoryManager:
         if not self.long_term:
             return
         
-        lru_key = min(
-            self.long_term.items(),
-            key=lambda item: item[1].last_accessed
-        )[0]
-        del self.long_term[lru_key]
+        # OrderedDict makes this O(1)
+        self.long_term.popitem(last=False)
     
     def get_stats(self) -> Dict[str, Any]:
         """Get memory statistics"""
