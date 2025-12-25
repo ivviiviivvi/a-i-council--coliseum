@@ -63,8 +63,39 @@ export default function Home() {
 
         <div className="card">
           <h2 className="text-3xl font-bold mb-4">🎥 Live Stream</h2>
-          <div className="aspect-video bg-gray-900 rounded-lg flex items-center justify-center">
-            <p className="text-white text-xl">Stream will appear here</p>
+          <div
+            className="aspect-video bg-gray-900 rounded-lg flex flex-col items-center justify-center relative overflow-hidden group border border-gray-800"
+            role="region"
+            aria-label="Live stream player placeholder"
+          >
+            {/* Background pattern - subtle gradient */}
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 opacity-50" />
+
+            {/* Status Badge - Top Right */}
+            <div className="absolute top-4 right-4 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-2 shadow-lg z-20">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                </span>
+                <span className="text-xs font-bold text-gray-200 tracking-wider">STANDBY</span>
+            </div>
+
+            {/* Center Content */}
+            <div className="z-10 flex flex-col items-center text-gray-400">
+              <div className="p-4 rounded-full bg-white/5 mb-4 group-hover:bg-white/10 transition-colors backdrop-blur-sm">
+                <svg
+                  className="w-12 h-12 opacity-50 group-hover:opacity-100 transition-opacity text-gray-300"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <p className="text-lg font-medium text-gray-300">Stream Offline</p>
+              <p className="text-sm text-gray-500 mt-1">Waiting for broadcast signal...</p>
+            </div>
           </div>
           <div className="mt-4 flex gap-4">
             <button className="btn-primary">Watch Live</button>
