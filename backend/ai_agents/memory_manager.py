@@ -6,7 +6,7 @@ Manages agent memory including short-term and long-term storage.
 
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
-from collections import deque
+from collections import deque, OrderedDict
 
 
 class MemoryEntry:
@@ -31,7 +31,8 @@ class MemoryManager:
     
     def __init__(self, max_short_term: int = 100, max_long_term: int = 1000):
         self.short_term: deque = deque(maxlen=max_short_term)
-        self.long_term: Dict[str, MemoryEntry] = {}
+        # Optimized: Use OrderedDict for O(1) LRU eviction
+        self.long_term: OrderedDict[str, MemoryEntry] = OrderedDict()
         self.max_long_term = max_long_term
     
     def add_short_term(self, value: Any) -> None:
@@ -50,26 +51,44 @@ class MemoryManager:
     
     def add_long_term(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
         """Add to long-term memory with optional TTL"""
-        # Clean expired entries
-        self._clean_expired()
+        # Optimized: O(1) insertion/update
         
+        # If key exists, move to end (mark as recent) and update value
+        if key in self.long_term:
+            self.long_term.move_to_end(key)
+            entry = self.long_term[key]
+            entry.value = value
+            # Update TTL if provided? Original code didn't update existing entry fields
+            # except overwriting the whole entry object.
+            # So we create a new entry to be safe.
+            entry = MemoryEntry(key, value, ttl)
+            self.long_term[key] = entry
+            return
+
+        # If full, evict LRU (O(1))
+        if len(self.long_term) >= self.max_long_term:
+            self.long_term.popitem(last=False)
+
         # Add new entry
         entry = MemoryEntry(key, value, ttl)
         self.long_term[key] = entry
-        
-        # Enforce size limit
-        if len(self.long_term) > self.max_long_term:
-            self._evict_lru()
     
     def get_long_term(self, key: str) -> Optional[Any]:
         """Get from long-term memory"""
-        self._clean_expired()
-        
+        # Optimized: Lazy expiration check (O(1)) instead of full scan
         entry = self.long_term.get(key)
+
         if entry:
+            # Check expiration
+            if entry.expires_at and entry.expires_at < datetime.utcnow():
+                del self.long_term[key]
+                return None
+
             entry.access_count += 1
             entry.last_accessed = datetime.utcnow()
+            self.long_term.move_to_end(key) # Mark as recently used
             return entry.value
+
         return None
     
     def remove_long_term(self, key: str) -> None:
@@ -92,6 +111,8 @@ class MemoryManager:
     
     def _clean_expired(self) -> None:
         """Remove expired entries"""
+        # Kept for compatibility or manual cleanup, but optimization relies on lazy expiration.
+        # Still O(N), but not called on hot path anymore.
         now = datetime.utcnow()
         expired_keys = [
             key for key, entry in self.long_term.items()
@@ -104,12 +125,8 @@ class MemoryManager:
         """Evict least recently used entry"""
         if not self.long_term:
             return
-        
-        lru_key = min(
-            self.long_term.items(),
-            key=lambda item: item[1].last_accessed
-        )[0]
-        del self.long_term[lru_key]
+        # Optimized: O(1) eviction
+        self.long_term.popitem(last=False)
     
     def get_stats(self) -> Dict[str, Any]:
         """Get memory statistics"""
