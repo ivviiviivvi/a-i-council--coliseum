@@ -85,7 +85,16 @@ class EventProcessor:
     ) -> List[ProcessedEvent]:
         """Process multiple events concurrently"""
         import asyncio
-        tasks = [self.process_event(event, enrichments) for event in events]
+
+        # Limit concurrency to avoid overwhelming resources.
+        # The number (e.g., 100) can be tuned or made configurable.
+        semaphore = asyncio.Semaphore(100)
+
+        async def _process_with_semaphore(event):
+            async with semaphore:
+                return await self.process_event(event, enrichments)
+
+        tasks = [_process_with_semaphore(event) for event in events]
         return await asyncio.gather(*tasks)
     
     async def enrich_sentiment(self, event: ProcessedEvent) -> ProcessedEvent:
