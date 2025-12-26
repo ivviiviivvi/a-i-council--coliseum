@@ -149,13 +149,16 @@ class EventIngestionSystem:
         limit: int = 10,
         source: Optional[EventSource] = None
     ) -> List[NormalizedEvent]:
-        """Get recent normalized events"""
+        """Get recent normalized events - optimized to avoid full sort"""
         events = self.normalized_events
         
+        # Apply source filter first, maintaining chronological order
         if source:
             events = [e for e in events if e.source == source]
         
-        return sorted(events, key=lambda e: e.timestamp, reverse=True)[:limit]
+        # Events are appended chronologically, slice the last N and reverse
+        # This ensures we get the most recent N events, even after filtering
+        return list(reversed(events[-limit:]))
     
     def clear_old_events(self, max_age_hours: int = 24) -> int:
         """Clear events older than specified hours"""
