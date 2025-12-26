@@ -59,6 +59,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    """Add security headers to all responses"""
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    return response
+
+
 # Include routers
 app.include_router(agents_router, prefix="/api/agents", tags=["agents"])
 app.include_router(events_router, prefix="/api/events", tags=["events"])
