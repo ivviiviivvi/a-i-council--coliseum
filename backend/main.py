@@ -5,8 +5,9 @@ Main entry point for the AI Council Coliseum backend.
 """
 
 import os
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from contextlib import asynccontextmanager
 import uvicorn
 
@@ -58,6 +59,26 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """
+    Middleware to add security headers to all responses.
+    🛡️ Sentinel Security Enhancement
+    """
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        # Prevent MIME type sniffing
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        # Prevent clickjacking
+        response.headers["X-Frame-Options"] = "DENY"
+        # Control referrer information
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        return response
+
+
+# Add Security Headers Middleware
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Include routers
 app.include_router(agents_router, prefix="/api/agents", tags=["agents"])
