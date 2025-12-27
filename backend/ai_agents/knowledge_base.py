@@ -64,18 +64,20 @@ class KnowledgeBase:
     
     def get_recent_entries(self, limit: int = 10) -> List[KnowledgeEntry]:
         """Get most recent entries"""
-        sorted_entries = sorted(
+        # Optimize: Use nlargest instead of full sort for O(N log K) vs O(N log N)
+        import heapq
+        return heapq.nlargest(
+            limit,
             self.entries.values(),
-            key=lambda e: e.created_at,
-            reverse=True
+            key=lambda e: e.created_at
         )
-        return sorted_entries[:limit]
     
     def get_popular_entries(self, limit: int = 10) -> List[KnowledgeEntry]:
         """Get most accessed entries"""
-        sorted_entries = sorted(
+        # Optimize: Use nlargest instead of full sort for O(N log K) vs O(N log N)
+        import heapq
+        return heapq.nlargest(
+            limit,
             self.entries.values(),
-            key=lambda e: e.access_count,
-            reverse=True
+            key=lambda e: e.access_count
         )
-        return sorted_entries[:limit]
